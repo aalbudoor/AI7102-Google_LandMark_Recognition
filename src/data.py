@@ -3,6 +3,18 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import pandas as pd
 from pathlib import Path
+import logging
+import time
+
+
+# Configure logging (do this once per module)
+logging.basicConfig(
+    level=logging.INFO,  # change to DEBUG for more verbosity
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%H:%M:%S"
+)
+
+logger = logging.getLogger(__name__)
 
 class GLDv2Dataset(Dataset):
     """
@@ -10,32 +22,40 @@ class GLDv2Dataset(Dataset):
     Expects columns: id, label, (optional: filepath, url, landmark_id)
     """
     def __init__(self, csv_path, img_root, transform=None):
+        start = time.time()
         self.df = pd.read_csv(csv_path)
         self.img_root = Path(img_root)
         self.transform = transform
+
+        logger.info(f"Initializing GLDv2Dataset from {csv_path}")
+        logger.info(f" → Total samples: {len(self.df)}")
+        logger.info(f" → Image root: {self.img_root}")
+
+        # ✅ FIX: Preload all image paths once for fast lookup
+        logger.info("Indexing all image files... (this may take 10–30s the first time)")
+        self.all_images = {p.stem: p for p in self.img_root.rglob("*.jpg")}
+        logger.info(f" → Indexed {len(self.all_images):,} images in {time.time() - start:.2f}s")
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
         img_id = row.id
 
-        # Try direct path first
-        direct_path = self.img_root / f"{img_id}.jpg"
-        if direct_path.exists():
-            img_path = direct_path
-        else:
-            # 🔍 Recursively search for the file in subdirectories
-            found = list(self.img_root.rglob(f"{img_id}.jpg"))
-            if len(found) == 0:
-                raise FileNotFoundError(f"Image {img_id}.jpg not found under {self.img_root}")
-            img_path = found[0]
+        img_path = self.all_images.get(img_id)
+        if img_path is None:
+            logger.warning(f"⚠️ Missing image: {img_id}.jpg not found under {self.img_root}")
+            raise FileNotFoundError(f"Image {img_id}.jpg not found under {self.img_root}")
 
-        img = Image.open(img_path).convert("RGB")
+        try:
+            img = Image.open(img_path).convert("RGB")
+        except Exception as e:
+            logger.error(f"❌ Failed to open {img_id}.jpg: {e}")
+            raise
+
         if self.transform:
             img = self.transform(img)
+
         label = int(row.label)
         return img, label
-
-
 
     def __len__(self):
         return len(self.df)

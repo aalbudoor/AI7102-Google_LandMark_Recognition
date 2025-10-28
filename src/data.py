@@ -16,12 +16,26 @@ class GLDv2Dataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        img_path = self.img_root / f"{row.id}.jpg"
+        img_id = row.id
+
+        # Try direct path first
+        direct_path = self.img_root / f"{img_id}.jpg"
+        if direct_path.exists():
+            img_path = direct_path
+        else:
+            # 🔍 Recursively search for the file in subdirectories
+            found = list(self.img_root.rglob(f"{img_id}.jpg"))
+            if len(found) == 0:
+                raise FileNotFoundError(f"Image {img_id}.jpg not found under {self.img_root}")
+            img_path = found[0]
+
         img = Image.open(img_path).convert("RGB")
         if self.transform:
             img = self.transform(img)
         label = int(row.label)
         return img, label
+
+
 
     def __len__(self):
         return len(self.df)

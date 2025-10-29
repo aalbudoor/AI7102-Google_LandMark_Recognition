@@ -28,13 +28,13 @@ class GLDv2Dataset(Dataset):
         self.transform = transform
 
         logger.info(f"Initializing GLDv2Dataset from {csv_path}")
-        logger.info(f" → Total samples: {len(self.df)}")
-        logger.info(f" → Image root: {self.img_root}")
+        logger.info(f"Total samples: {len(self.df)}")
+        logger.info(f"Image root: {self.img_root}")
 
         # ✅ FIX: Preload all image paths once for fast lookup
-        logger.info("Indexing all image files... (this may take 10–30s the first time)")
+        logger.info("Indexing all image files... (this may take 10-30s the first time)")
         self.all_images = {p.stem: p for p in self.img_root.rglob("*.jpg")}
-        logger.info(f" → Indexed {len(self.all_images):,} images in {time.time() - start:.2f}s")
+        logger.info(f"Indexed {len(self.all_images):,} images in {time.time() - start:.2f}s")
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
@@ -42,13 +42,13 @@ class GLDv2Dataset(Dataset):
 
         img_path = self.all_images.get(img_id)
         if img_path is None:
-            logger.warning(f"⚠️ Missing image: {img_id}.jpg not found under {self.img_root}")
+            logger.warning(f"Missing image: {img_id}.jpg not found under {self.img_root}")
             raise FileNotFoundError(f"Image {img_id}.jpg not found under {self.img_root}")
 
         try:
             img = Image.open(img_path).convert("RGB")
         except Exception as e:
-            logger.error(f"❌ Failed to open {img_id}.jpg: {e}")
+            logger.error(f"Failed to open {img_id}.jpg: {e}")
             raise
 
         if self.transform:

@@ -76,26 +76,42 @@ class DeepCNNPretrained(nn.Module):
     def __init__(self, num_classes, pretrained=True):
         super().__init__()
         start = time.time()
-        logger.info("🧱 Initializing Deep CNN (ResNet18 backbone)")
+        logger.info("🧱 Initializing Deep CNN (ResNet18 + extra conv layers)")
 
+        # 🔹 Load pretrained ResNet18 backbone
         backbone = models.resnet18(weights="IMAGENET1K_V1" if pretrained else None)
-        self.features = nn.Sequential(*list(backbone.children())[:-1])  # remove FC
-        in_feats = backbone.fc.in_features
+        self.base_features = nn.Sequential(*list(backbone.children())[:-2])  # keep conv layers only
 
+        in_feats = 512  # ResNet18’s last conv output channels
+
+        # 🔹 Add extra convolutional layers on top
+        self.extra_conv = nn.Sequential(
+            nn.Conv2d(in_feats, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(512, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            nn.AdaptiveAvgPool2d((1, 1))
+        )
+
+        # 🔹 Classifier head
         self.classifier = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(in_feats, 256),
+            nn.Linear(256, 256),
             nn.ReLU(),
             nn.Dropout(0.5),
             nn.Linear(256, num_classes)
         )
 
         elapsed = time.time() - start
-        logger.info(f"✅ Deep CNN initialized (pretrained={pretrained}) in {elapsed:.2f}s")
+        logger.info(f"✅ Deep CNN initialized with extra conv layers in {elapsed:.2f}s")
 
     def forward(self, x):
-        x = self.features(x)
-        return self.classifier(x)
+        x = self.base_features(x)
+        x = self.extra_conv(x)
+        x = self.classifier(x)
+        return x
 
 
 # ---------------------------------------------------------

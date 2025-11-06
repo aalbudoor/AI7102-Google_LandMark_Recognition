@@ -3,6 +3,8 @@ from torch import nn, optim
 from tqdm import tqdm
 import logging
 import time
+from datetime import datetime
+from pathlib import Path
 
 from src.data import make_loaders
 from src.transforms import get_transforms
@@ -12,8 +14,6 @@ from src.models import (
     ViTModel,
     ShallowAutoencoder
 )
-
-results_log = open("training_summary.txt", "w")
 
 # ---------------------------------------------------------
 # Logging setup
@@ -25,9 +25,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+RUN_STAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
+RESULTS_DIR = Path("runs") / RUN_STAMP
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+results_log = open(RESULTS_DIR / "training_summary.txt", "w")
+
 
 # ---------------------------------------------------------
-# Utility: One epoch training
+# Utility: One epoch training (mini-batch)
 # ---------------------------------------------------------
 def train_one_epoch(model, loader, optimizer, loss_fn, device, epoch, log_interval=50):
     model.train()
@@ -36,7 +41,9 @@ def train_one_epoch(model, loader, optimizer, loss_fn, device, epoch, log_interv
     logger.info(f"Starting epoch {epoch + 1}")
 
     for batch_idx, (x, y) in enumerate(loop):
-        x, y = x.to(device), y.to(device)
+        # ---- mini-batch: x.shape == [B, C, H, W]
+        x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
+
         optimizer.zero_grad()
         logits = model(x)
         loss = loss_fn(logits, y)
@@ -48,11 +55,10 @@ def train_one_epoch(model, loader, optimizer, loss_fn, device, epoch, log_interv
         correct += (preds == y).sum().item()
         total += y.size(0)
 
-        # Optional live accuracy in tqdm bar
-        acc = correct / total if total > 0 else 0
-        loop.set_postfix(loss=loss.item(), acc=f"{acc:.3f}")
+        # live metrics on the progress bar
+        acc = correct / total if total > 0 else 0.0
+        loop.set_postfix(loss=f"{loss.item():.4f}", acc=f"{acc:.3f}")
 
-        # Log periodically
         if (batch_idx + 1) % log_interval == 0:
             logger.info(f"Batch {batch_idx+1:04d}/{len(loader)} | "
                         f"Train Loss: {running_loss/total:.4f} | Acc: {acc:.4f}")
@@ -71,7 +77,7 @@ def evaluate(model, loader, loss_fn, device, epoch):
     total, correct, running_loss = 0, 0, 0.0
     with torch.no_grad():
         for x, y in loader:
-            x, y = x.to(device), y.to(device)
+            x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
             logits = model(x)
             loss = loss_fn(logits, y)
             running_loss += loss.item() * x.size(0)
@@ -84,9 +90,9 @@ def evaluate(model, loader, loss_fn, device, epoch):
 
 
 # ---------------------------------------------------------
-# Pretraining for Shallow Autoencoder
+# Pretraining for Shallow Autoencoder (run once)
 # ---------------------------------------------------------
-def pretrain_autoencoder(cfg, dl_train, device):
+def pretrain_autoencoder(dl_train, device, epochs=10, lr=1e-3, save_path="shallow_encoder_pretrained.pth"):
     logger.info("🔧 Pretraining Shallow Autoencoder...")
 
     print("\n==============================", file=results_log)
@@ -94,14 +100,14 @@ def pretrain_autoencoder(cfg, dl_train, device):
     print("==============================", file=results_log)
 
     model = ShallowAutoencoder().to(device)
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
     loss_fn = nn.MSELoss()
 
-    for epoch in range(50):
+    for epoch in range(epochs):
         model.train()
         running_loss = 0
         for x, _ in tqdm(dl_train, desc=f"AE Epoch {epoch+1}", leave=False):
-            x = x.to(device)
+            x = x.to(device, non_blocking=True)
             optimizer.zero_grad()
             recon = model(x)
             loss = loss_fn(recon, x)
@@ -112,17 +118,19 @@ def pretrain_autoencoder(cfg, dl_train, device):
         logger.info(f"AE Epoch {epoch+1} | Recon Loss: {avg:.4f}")
         print(f"AE Epoch {epoch+1} | Recon Loss: {avg:.4f}", file=results_log, flush=True)
 
-    torch.save(model.encoder.state_dict(), "shallow_encoder_pretrained.pth")
-    logger.info("✅ Autoencoder pretraining completed and weights saved.")
-    print("✅ Autoencoder pretraining completed and weights saved.\n", file=results_log, flush=True)
+    torch.save(model.encoder.state_dict(), save_path)
+    logger.info(f"✅ Autoencoder pretraining completed and weights saved → {save_path}")
+    print(f"✅ Autoencoder pretraining completed and weights saved → {save_path}\n", file=results_log, flush=True)
 
 
 # ---------------------------------------------------------
-# Main training function
+# Main training for one model/dataset
 # ---------------------------------------------------------
-def train_model(model, cfg, dl_train, dl_val, device):
-    logger.info("🚀 Starting fine-tuning loop...")
+def train_model(model, cfg, dl_train, dl_val, device, model_tag="model", classes_tag="unknown"):
+    logger.info(f"🚀 Starting fine-tuning loop... [{model_tag} | {classes_tag} classes]")
     loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
+
+    # Optimizer (AdamW is solid for pretrained CNN/ViT; keep as requested)
     optimizer = optim.AdamW(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
 
     best_val_acc = 0.0
@@ -137,87 +145,105 @@ def train_model(model, cfg, dl_train, dl_val, device):
             f"Train Acc {tr_acc:.3f} | Val Acc {val_acc:.3f} | "
             f"Train Loss {tr_loss:.3f} | Val Loss {val_loss:.3f}"
         )
+        print(
+            f"[{model_tag} | {classes_tag}] Epoch {epoch+1}/{cfg['epochs']} | "
+            f"Train Acc {tr_acc:.3f} | Val Acc {val_acc:.3f} | "
+            f"Train Loss {tr_loss:.3f} | Val Loss {val_loss:.3f}",
+            file=results_log, flush=True
+        )
 
-        print(f"Epoch {epoch+1} Summary | Train Loss: {tr_loss:.4f} | Train Acc: {tr_acc:.4f} | Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}", file=results_log, flush=True)
-        print(f"Epoch {epoch+1}/{cfg['epochs']} | Train Acc {tr_acc:.3f} | Val Acc {val_acc:.3f} | Train Loss {tr_loss:.3f} | Val Loss {val_loss:.3f}", file=results_log, flush=True)
-
-        # Track best accuracy
+        # Save best
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), f"best_model_epoch{epoch+1}.pth")
-            logger.info(f"🌟 New best model saved at epoch {epoch+1} with Val Acc {val_acc:.4f}")
+            ckpt = RESULTS_DIR / f"best_{model_tag}_{classes_tag}_epoch{epoch+1}.pth"
+            torch.save(model.state_dict(), ckpt)
+            logger.info(f"🌟 New best model saved at epoch {epoch+1} with Val Acc {val_acc:.4f} → {ckpt}")
 
     total_time = time.time() - start_time
     logger.info(f"✅ Fine-tuning completed in {total_time/60:.2f} min | Best Val Acc: {best_val_acc:.4f}")
-
-    print(f"\n✅ Fine-tuning completed in {total_time/60:.2f} min | Best Val Acc: {best_val_acc:.4f}", file=results_log, flush=True)
-    print("="*80, file=results_log)
+    print(
+        f"\n✅ [{model_tag} | {classes_tag}] Fine-tuning completed in {total_time/60:.2f} min | "
+        f"Best Val Acc: {best_val_acc:.4f}\n" + "="*80,
+        file=results_log,
+        flush=True
+    )
 
 
 # ---------------------------------------------------------
-# Runner
+# Run sequentially on 50 → 75 → 100 classes
 # ---------------------------------------------------------
 if __name__ == "__main__":
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info(f"Using device: {device}")
+
+    # Base cfg; we’ll vary num_classes and CSVs per loop
     cfg = {
-        "split_dir": "data/splits_100",
+        "split_dir": "data/splits_balanced",  # << new balanced CSVs
         "img_root": "/home/abdulla.alshehhi/Desktop/AI7102-Google_LandMark_Recognition/data/images",
-        "batch_size": 32,
+        "batch_size": 32,       # mini-batch size
         "num_workers": 4,
         "lr": 1e-6,
         "weight_decay": 1e-4,
         "epochs": 65,
-        "num_classes": 100,
+        "num_classes": 100,     # will be overwritten per round
     }
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info(f"Using device: {device}")
-
     transforms = get_transforms(img_size=224)
-    logger.info("Loading DataLoaders...")
-    dl_train, dl_val = make_loaders(cfg, transforms)
-    logger.info("✅ DataLoaders ready")
 
-    # -----------------------------------------------------
-    # 1️⃣ Pretrain Shallow Autoencoder (once)
-    # -----------------------------------------------------
-    pretrain_autoencoder(cfg, dl_train, device)
+    CLASS_SIZES = [50, 75, 100]
 
-    # -----------------------------------------------------
-    # 2️⃣ Train Shallow CNN (with pretrained encoder)
-    # -----------------------------------------------------
-    print("\n==============================", file=results_log)
-    print("🚀 Training Shallow CNN (Pretrained)", file=results_log)
-    print("==============================", file=results_log)
+    first_dl_train_for_ae = None
 
+    for n_cls in CLASS_SIZES:
+        logger.info("\n" + "="*80)
+        logger.info(f"🎯 Starting training for dataset with {n_cls} classes")
+        logger.info("="*80)
 
-    logger.info("\nTraining Shallow CNN (Pretrained)")
-    model = ShallowCNN(cfg["num_classes"], pretrained_path="shallow_encoder_pretrained.pth").to(device)
-    train_model(model, cfg, dl_train, dl_val, device)
+        cfg["num_classes"] = n_cls
 
-    # -----------------------------------------------------
-    # 3️⃣ Train Deep CNN (ResNet backbone)
-    # -----------------------------------------------------
+        # Build loaders for this class count (mini-batch handled by DataLoader)
+        dl_train, dl_val = make_loaders(cfg, transforms)
+        logger.info("✅ DataLoaders ready "
+                    f"— Train: {len(dl_train.dataset)} | Val: {len(dl_val.dataset)} | "
+                    f"Batch size: {cfg['batch_size']}")
 
-    print("\n==============================", file=results_log)
-    print("🚀 Training Deep CNN (ResNet Pretrained)", file=results_log)
-    print("==============================", file=results_log)
+        # Keep first train loader for shallow autoencoder pretrain
+        if first_dl_train_for_ae is None:
+            first_dl_train_for_ae = dl_train
 
-    logger.info("\nTraining Deep CNN (ResNet Pretrained)")
-    model = DeepCNNPretrained(cfg["num_classes"], pretrained=True).to(device)
-    train_model(model, cfg, dl_train, dl_val, device)
+    # ---- Pretrain shallow AE once (on first dataset’s images)
+    pretrain_autoencoder(first_dl_train_for_ae, device, epochs=10, lr=1e-3,
+                         save_path=str(RESULTS_DIR / "shallow_encoder_pretrained.pth"))
 
-    # -----------------------------------------------------
-    # 4️⃣ Train Vision Transformer (ViT Pretrained)
-    # -----------------------------------------------------
+    # ---- Now actually train all three models sequentially for each dataset size
+    for n_cls in CLASS_SIZES:
+        cfg["num_classes"] = n_cls
+        dl_train, dl_val = make_loaders(cfg, transforms)
 
-    print("\n==============================", file=results_log)
-    print("🚀 Training Vision Transformer (ViT-B16 Pretrained)", file=results_log)
-    print("==============================", file=results_log)
-    logger.info("\nTraining Vision Transformer (ViT-B16 Pretrained)")
-    model = ViTModel(cfg["num_classes"], pretrained=True).to(device)
-    train_model(model, cfg, dl_train, dl_val, device)
+        # 1) Shallow CNN (uses pretrained encoder)
+        print("\n==============================", file=results_log)
+        print(f"🚀 Training Shallow CNN (Pretrained) | {n_cls} classes", file=results_log)
+        print("==============================", file=results_log)
+        logger.info(f"\nTraining Shallow CNN (Pretrained) | {n_cls} classes")
+        shallow = ShallowCNN(n_cls, pretrained_path=str(RESULTS_DIR / "shallow_encoder_pretrained.pth")).to(device)
+        train_model(shallow, cfg, dl_train, dl_val, device, model_tag="shallowcnn", classes_tag=str(n_cls))
 
-    results_log.write("🎯 All experiments completed successfully!\n")
+        # 2) Deep CNN (ResNet backbone)
+        print("\n==============================", file=results_log)
+        print(f"🚀 Training Deep CNN (ResNet Pretrained) | {n_cls} classes", file=results_log)
+        print("==============================", file=results_log)
+        logger.info(f"\nTraining Deep CNN (ResNet Pretrained) | {n_cls} classes")
+        deep = DeepCNNPretrained(n_cls, pretrained=True).to(device)
+        train_model(deep, cfg, dl_train, dl_val, device, model_tag="deepcnn", classes_tag=str(n_cls))
+
+        # 3) Vision Transformer (ViT)
+        print("\n==============================", file=results_log)
+        print(f"🚀 Training Vision Transformer (ViT-B16 Pretrained) | {n_cls} classes", file=results_log)
+        print("==============================", file=results_log)
+        logger.info(f"\nTraining Vision Transformer (ViT-B16 Pretrained) | {n_cls} classes")
+        vit = ViTModel(n_cls, pretrained=True).to(device)
+        train_model(vit, cfg, dl_train, dl_val, device, model_tag="vitb16", classes_tag=str(n_cls))
+
+    results_log.write("🎯 All experiments (50 → 75 → 100) completed successfully!\n")
     results_log.close()
-    
-    logger.info("🎯 All experiments completed successfully!")
+    logger.info("🎯 All experiments (50 → 75 → 100) completed successfully!")

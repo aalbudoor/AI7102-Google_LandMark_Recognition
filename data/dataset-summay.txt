@@ -1,0 +1,18 @@
+Loading metadata CSVs...
+Loaded 4,132,914 train entries, 81,313 clean mappings.
+Found 1214255 image files recursively.
+Matching images: 100%|██████████████████████████████████████████████████████████████████| 4132914/4132914 [03:33<00:00, 19335.23it/s]
+Matched 1,214,255 images with metadata (2,918,659 missing).
+Using 50 classes | 10 images per class.
+Saved: data/splits_balanced/train_50.csv (400 samples)
+Saved: data/splits_balanced/test_50.csv (100 samples)
+
+Using 75 classes | 10 images per class.
+Saved: data/splits_balanced/train_75.csv (600 samples)
+Saved: data/splits_balanced/test_75.csv (150 samples)
+
+Using 100 classes | 10 images per class.
+Saved: data/splits_balanced/train_100.csv (800 samples)
+Saved: data/splits_balanced/test_100.csv (200 samples)
+
+All balanced datasets created successfully!

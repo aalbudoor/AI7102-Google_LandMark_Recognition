@@ -1,5 +1,5 @@
 # AI7102-Google_LandMark_Recognition
-Automatic landmark recognition is a challenging problem: wide class imbalance, intra-class variation (lighting, viewpoint, occlusion), and inter-class similarity. The proposed solutions use convolutional backbones, metric learning, retrieval based methods, and ensembling.
+Automatic landmark recognition is a challenging problem: wide class imbalance, intra-class variation (lighting, viewpoint, occlusion), and inter-class similarity. The proposed solutions use convolutional architecture, metric learning, retrieval based methods, and data augmentation.
 
 This project implements a full training pipeline for the **Google Landmark Recognition Dataset (GLDv2)** using:
 
@@ -9,7 +9,7 @@ This project implements a full training pipeline for the **Google Landmark Recog
 - **Variable-depth CNN experiments (3–13 layers)**
 - **Autoencoder pretraining for feature initialization**
 
-The project evaluates model performance across **50-class**, **75-class**, and **100-class** subsets of GLDv2, and includes both **CNN depth experiments** and **full-model experiments**.
+Purpose is to evaluates model performance across **50-class**, **75-class**, and **100-class** subsets of GLDv2, and includes both **CNN depth experiments** and **full-model experiments**.
 
 ---
 

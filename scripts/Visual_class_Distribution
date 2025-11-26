@@ -1,0 +1,35 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def plot_train_test_counts(train_csv, test_csv):
+    # Load CSVs
+    train_df = pd.read_csv(train_csv)
+    test_df = pd.read_csv(test_csv)
+
+    # Count images
+    train_count = len(train_df)
+    test_count = len(test_df)
+
+    # Prepare bar data
+    labels = ["Train", "Test"]
+    counts = [train_count, test_count]
+
+    # Plot
+    plt.figure(figsize=(8, 5))
+    plt.bar(labels, counts, color=["salmon", "skyblue"])
+
+    plt.title("Train vs Test Image Count", fontsize=16, fontweight="bold")
+    plt.ylabel("Number of Images", fontsize=14)
+    plt.xlabel("Dataset", fontsize=14)
+
+    # Label bars with exact values
+    for i, val in enumerate(counts):
+        plt.text(i, val + max(counts)*0.01, str(val),
+                 ha='center', fontsize=12, fontweight='bold')
+
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    plot_train_test_counts("data/splits_balanced/train_100.csv", "data/splits_balanced/test_100.csv")

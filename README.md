@@ -317,7 +317,7 @@ Demo complete!
 
 ---
 
-### **Why This Script Is Useful**
+### **Scripts Purpose**
 
 - Verifies correct project setup and dataset paths  
 - Confirms transforms and preprocessing work  

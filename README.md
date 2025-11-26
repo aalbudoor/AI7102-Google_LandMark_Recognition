@@ -48,6 +48,7 @@ AI7102-Google_LandMark_Recognition/
 │   ├── utils/                   # (Optional utilities)
 │   ├── train_all_models.py      # Main experiment: shallow, deep, ViT
 │   ├── train_all_cnns.py        # CNN depth experiment (3–13 layers)
+|   |-- demo.py                  # Pipeline Demonstration Script
 │
 ├── README.md                    # ← Place this file here
 ├── requirements.txt             # ← Also place this beside README
@@ -253,6 +254,77 @@ This installs every library needed for:
 - Data loading and augmentation
 - Logging & evaluation tools
 
+
+## `demo.py` — Pipeline Demonstration Script
+
+The `demo.py` script provides a minimal demonstration of how the **Google Landmarks Recognition** pipeline operates using this project's modules.  
+It serves as a quick functional check to ensure that:
+
+- the dataset loads correctly  
+- transforms are applied properly  
+- the model initializes without errors  
+- a forward pass runs end-to-end  
+
+This script **does not train** any models—it only performs inference on a small sample batch.
+
+---
+
+1. **Loads a Small Batch of Images**  
+   Uses `make_loaders()` from `src.data` to create train/validation DataLoaders and fetch one batch from the training set.
+
+2. **Initializes the ShallowCNN Model**  
+   Constructs a lightweight CNN from `src.models` configured for the 50-class demo split.
+
+3. **Runs a Forward Pass**  
+   Executes a single forward pass under `torch.no_grad()` and prints the output tensor shapes.
+
+4. **Displays Inputs and Outputs**  
+   Prints:
+   - input batch shape  
+   - label indices  
+   - logits shape  
+   - example logits  
+   - predicted class indices  
+
+---
+
+### **Example Output (abridged)**
+
+```
+===== SAMPLE INPUT BATCH =====
+Image batch shape: torch.Size([4, 3, 224, 224])
+Labels: [12, 4, 7, 19]
+
+===== MODEL OUTPUT =====
+Logits shape: torch.Size([4, 50])
+Sample logits row 0: tensor([...])
+
+===== PREDICTIONS =====
+Predicted classes: [12, 3, 7, 22]
+
+Demo complete!
+```
+
+---
+
+### **Modules Used**
+
+| Module | Purpose |
+|--------|---------|
+| `src.data.make_loaders` | Loads GLDv2 dataset + DataLoader creation |
+| `src.transforms.get_transforms` | Applies augmentation and normalization |
+| `src.models.ShallowCNN` | Lightweight CNN architecture for testing |
+
+---
+
+### **Why This Script Is Useful**
+
+- Verifies correct project setup and dataset paths  
+- Confirms transforms and preprocessing work  
+- Checks model initialization and forward connectivity  
+- Provides a simple reference for writing custom scripts  
+
+---
 
 
 

@@ -288,7 +288,7 @@ This script **does not train** any models—it only performs inference on a smal
 
 ---
 
-### **Example Output (abridged)**
+### **Example Output **
 
 ```
 ===== SAMPLE INPUT BATCH =====

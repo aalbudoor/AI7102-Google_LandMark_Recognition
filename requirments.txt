@@ -1,0 +1,19 @@
+# --- Core ML Framework ---
+torch==2.2.1
+torchvision==0.17.1
+torchaudio==2.2.1
+
+# --- Transformer / ViT Models ---
+timm==0.9.12
+
+# --- Data Processing ---
+pandas==2.2.1
+numpy==1.26.4
+Pillow==10.2.0
+opencv-python==4.9.0.80
+
+# --- Utils / Training Tools ---
+tqdm==4.66.2
+matplotlib==3.8.2
+scikit-learn==1.4.1.post1
+loguru==0.7.2

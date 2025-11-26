@@ -17,6 +17,7 @@ The project evaluates model performance across **50-class**, **75-class**, and *
 
 
 
+```
 AI7102-Google_LandMark_Recognition/
 │
 ├── data/
@@ -45,10 +46,13 @@ AI7102-Google_LandMark_Recognition/
 │   ├── models.py                # Shallow CNN, Deep CNN, ViT
 │   ├── transforms.py            # Augmentation + normalization
 │   ├── utils/                   # (Optional utilities)
-    ├── train_all_models.py          # Main experiment: shallow, deep, ViT
-    ├── train_all_cnns.py            # CNN depth experiment (3–13 layers)
+│   ├── train_all_models.py      # Main experiment: shallow, deep, ViT
+│   ├── train_all_cnns.py        # CNN depth experiment (3–13 layers)
+│
 ├── README.md                    # ← Place this file here
 ├── requirements.txt             # ← Also place this beside README
+```
+
 
 This project uses **Google Landmark Dataset v2** (GLDv2).  
 The dataset is downloaded using:

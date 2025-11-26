@@ -68,8 +68,8 @@ Using the provided script in /scripts/download-dataset.sh
 
 Run the command (Make sure permissions are enabled using "chmod +x download-dataset.sh")
 
-mkdir train && cd train
-bash ../download-dataset.sh train 499
+```mkdir train && cd train```
+```bash ../download-dataset.sh train 499```
 
 This will automatically download, verify and extract the images to the train directory.
 
@@ -205,15 +205,16 @@ Defines all transformations.
 # **4. Running Experiments**
 
 ## **Train All Models**
-python train_all_models.py
+- Ensure you are in the root directory and run it using the following:
+```python -m src.train_all_models ```
 
 
 Output saved in: runs/<timestamp>/
 
 
 ## **Run CNN Depth Experiments**
-
-python train_all_cnns.py
+- Ensure you are in the root directory and run it using the following:
+```python -m src.train_all_cnns ```
 
 
 Output saved in: cnn_depth_experiments/<timestamp>/
@@ -232,13 +233,13 @@ Creating a virtual environment isolates your dependencies and prevents conflicts
 
 ### **Linux / macOS**
 
-`python3 -m venv venv
-source venv/bin/activate`
+```python3 -m venv venv```
+```source venv/bin/activate```
 
-### **Windows **
+### Windows
 
-`python -m venv venv
-venv\Scripts\activate`
+```python -m venv venv```
+```venv\Scripts\activate```
 
 Install all dependencies from requirements.txt
 Once the environment is activated, run: pip install -r requirements.txt or pip freeze > requirements.txt

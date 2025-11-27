@@ -54,6 +54,7 @@ AI7102-Google_LandMark_Recognition/
 ├── requirements.txt             # ← Also place this beside README
 ```
 
+# **1. Downloading the GLDv2 Dataset**
 
 This project uses **Google Landmark Dataset v2** (GLDv2).  
 The dataset is downloaded using:
@@ -91,11 +92,7 @@ then
 bash scripts/flatten_images.sh
 ```
 
-After running the script we recommend moving all the downloaded images from the **flatten_images** directory inside two directories:
-
-
-**data/train_images/**
-**data/test_images/**
+After running the script we recommend creating two directories **data/train_images/** and **data/test_images/**, then finaly moving **all** the downloaded images from the **flatten_images** inside those two directories.
 
 
 

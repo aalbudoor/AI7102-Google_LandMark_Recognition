@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import os
 import torch.optim as optim
 from tqdm import tqdm
 import logging
@@ -207,9 +208,11 @@ def run_experiment(cfg):
 
 # Entry point — configuration + start experiment
 if __name__ == "__main__":
+    # Root directory of the project (folder containing this script's parent directory)
+    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     cfg = {
-        "split_dir": "data/splits_balanced",
-        "img_root": "/home/abdulla.alshehhi/Desktop/AI7102-Google_LandMark_Recognition/data/images", #Refactor the path where images are loaded
+        "split_dir": os.path.join(PROJECT_ROOT, "data", "splits_balanced"),
+        "img_root": os.path.join(PROJECT_ROOT, "data", "images"),
         "batch_size": 32,
         "num_workers": 4,
         "lr": 1e-3,

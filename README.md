@@ -67,23 +67,39 @@ https://github.com/cvdfoundation/google-landmark
 
 Using the provided script in /scripts/download-dataset.sh
 
+Navigate to the **scripts** directory
+
 Run the command (Make sure permissions are enabled using "chmod +x download-dataset.sh")
 
+```chmod +x download-dataset.sh```
 ```mkdir train && cd train```
 ```bash ../download-dataset.sh train 499```
 
-This will automatically download, verify and extract the images to the train directory.
+This will automatically download, verify and extract the images to the **scripts/train** directory. 
+
+After Downloading the images follow the next step
+
+### **Flattening the Downloaded Images**
+
+After the dataset finishes downloading in the **scripts/train** directory, run the **flatten_images.sh** script to simplify the directory structure. the images will be deposited in the **data/flat_images** directory.
+This script **recursively collects all `.jpg` images from nested folders and copies them into a single flat directory, automatically renaming duplicates**.
+
+**Usage:**
+```chmod +x flatten_images.sh```
+then 
+```bash
+bash scripts/flatten_images.sh
+```
+
+After running the script we recommend moving all the downloaded images from the **flatten_images** directory inside two directories:
+
+
+**data/train_images/**
+**data/test_images/**
 
 
 
-We recomment to move the downloaded inside the following directories:
-
-
-data/train_images/
-data/test_images/
-
-
-** CSV metadata (train_50.csv, test_50.csv, etc.) is stored in: **
+**CSV metadata (train_50.csv, test_50.csv, etc.) is stored in:**
 
 data/splits_balanced/
 
@@ -203,24 +219,6 @@ Defines all transformations.
 
 ---
 
-# **4. Running Experiments**
-
-## **Train All Models**
-- Ensure you are in the root directory and run it using the following:
-```python -m src.train_all_models ```
-
-
-Output saved in: runs/<timestamp>/
-
-
-## **Run CNN Depth Experiments**
-- Ensure you are in the root directory and run it using the following:
-```python -m src.train_all_cnns ```
-
-
-Output saved in: cnn_depth_experiments/<timestamp>/
-
-
 # How to Use the `requirements.txt` File
 
 This project includes a `requirements.txt` file that lists all Python dependencies needed to run the Google Landmark Recognition training pipelines (Shallow CNN, Deep CNN, ViT Transformer, and CNN depth experiments).
@@ -243,7 +241,7 @@ Creating a virtual environment isolates your dependencies and prevents conflicts
 ```venv\Scripts\activate```
 
 Install all dependencies from requirements.txt
-Once the environment is activated, run: pip install -r requirements.txt or pip freeze > requirements.txt
+Once the environment is activated, run: ```pip install -r requirements.txt``` or ```pip freeze > requirements.txt```
 
 
 This installs every library needed for:
@@ -253,6 +251,8 @@ This installs every library needed for:
 - Autoencoder pretraining
 - Data loading and augmentation
 - Logging & evaluation tools
+
+
 
 
 ## `demo.py` — Pipeline Demonstration Script
@@ -325,6 +325,23 @@ Demo complete!
 - Provides a simple reference for writing custom scripts  
 
 ---
+
+# **4. Running Experiments**
+
+## **Train All Models**
+- Ensure you are in the root directory and run it using the following:
+```python -m src.train_all_models ```
+
+
+Output saved in: runs/<timestamp>/
+
+
+## **Run CNN Depth Experiments**
+- Ensure you are in the root directory and run it using the following:
+```python -m src.train_all_cnns ```
+
+
+Output saved in: cnn_depth_experiments/<timestamp>/
 
 
 

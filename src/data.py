@@ -66,11 +66,11 @@ class GLDv2Dataset(Dataset):
 
         # Count how many images actually exist on disk
         found = sum(1 for img_id in self.df["id"] if img_id in self.image_map)
-        logger.info(f"📊 Found {found:,}/{len(self.df):,} images ({found/len(self.df)*100:.2f}%) in directory.")
+        logger.info(f"Found {found:,}/{len(self.df):,} images ({found/len(self.df)*100:.2f}%) in directory.")
 
         sample_ids = list(self.df["id"].head(3))
         sample_hits = [sid in self.image_map for sid in sample_ids]
-        logger.info(f"🔍 Sample check (first 3): {list(zip(sample_ids, sample_hits))}")
+        logger.info(f"Sample check (first 3): {list(zip(sample_ids, sample_hits))}")
 
 
 
@@ -134,6 +134,7 @@ class GLDv2Dataset(Dataset):
         return image, label
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 
@@ -149,7 +150,7 @@ def make_loaders(cfg, transforms):
     - num_workers
     - train_img_root / test_img_root (optional)
     """
-    split_dir = Path(cfg.get("split_dir", "data/splits_balanced")).resolve()
+    split_dir = PROJECT_ROOT / cfg.get("split_dir", "data/splits_balanced")
     num_classes = cfg.get("num_classes", 100)
 
     # CSV files for this experiment

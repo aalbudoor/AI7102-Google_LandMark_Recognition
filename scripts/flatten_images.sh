@@ -1,16 +1,20 @@
 #!/bin/bash
 set -e  # stop on errors
 
+
+# --- Auto-detect project root (directory containing this script) ---
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 # Define paths
-SRC="/home/abdulla.alshehhi/Desktop/r/AI7102-Google_LandMark_Recognition/data/images"
-DST="/home/abdulla.alshehhi/Desktop/r/AI7102-Google_LandMark_Recognition/data/flat_images"
+SRC="$PROJECT_ROOT/scripts/train"        # Where images are downloaded
+DST="$PROJECT_ROOT/data/flat_images"   # Where flattened images will be stored
 
 # Create destination directory if it doesn’t exist
 mkdir -p "$DST"
 
 echo " Flattening all .jpg images from:"
 echo "    $SRC"
-echo "➡️  to:"
+echo "to:"
 echo "    $DST"
 echo ""
 
@@ -33,4 +37,4 @@ find "$SRC" -type f \( -iname "*.jpg" \) | while read -r file; do
     fi
 done
 
-echo "✅ Done! All .jpg files have been copied to: $DST"
+echo "Done! All .jpg files have been copied to: $DST"

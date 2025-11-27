@@ -5,6 +5,7 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
+import os
 
 from src.data import make_loaders
 from src.transforms import get_transforms
@@ -210,11 +211,11 @@ def train_model(model, cfg, dl_train, dl_val, device, model_tag="model", classes
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"Using device: {device}")
-
-    # Base cfg; we’ll vary num_classes and CSVs per loop
+    PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+   
     cfg = {
-        "split_dir": "data/splits_balanced",  # << new balanced CSVs
-        "img_root": "/home/abdulla.alshehhi/Desktop/AI7102-Google_LandMark_Recognition/data/images", #Refactor the path where images are loaded
+        "split_dir": os.path.join(PROJECT_ROOT, "data", "splits_balanced"),
+        "img_root": os.path.join(PROJECT_ROOT, "data", "images"),
         "batch_size": 32,       # mini-batch size
         "num_workers": 4,
         "lr": 1e-6,
@@ -233,7 +234,7 @@ if __name__ == "__main__":
     # A for loop to build all dataloaders once
     for n_cls in CLASS_SIZES:
         logger.info("\n" + "="*80)
-        logger.info(f"🎯 Starting training for dataset with {n_cls} classes")
+        logger.info(f"Starting training for dataset with {n_cls} classes")
         logger.info("="*80)
 
         cfg["num_classes"] = n_cls

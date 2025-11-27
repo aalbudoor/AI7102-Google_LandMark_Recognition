@@ -76,7 +76,7 @@ This will automatically download, verify and extract the images to the train dir
 
 
 
-The downloaded images will be placed inside:
+We recomment to move the downloaded inside the following directories:
 
 
 data/train_images/

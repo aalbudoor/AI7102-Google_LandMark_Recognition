@@ -8,19 +8,22 @@ This script:
 3. Runs a forward pass
 4. Prints sample inputs and outputs
 """
-
+from pathlib import Path
 import torch
 from src.data import make_loaders
 from src.transforms import get_transforms
 from src.models import ShallowCNN
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
 # ---------------------------------------------------------
 # 1. CONFIGURATION
 # ---------------------------------------------------------
 
+
 cfg = {
-    "split_dir": "data/splits_balanced",
-    "img_root": "data/images", #Refactor the path where images are loaded
+    "split_dir": PROJECT_ROOT / "data/splits_balanced",
+    "img_root": PROJECT_ROOT / "data/images", #Refactor the path where images are loaded
     "batch_size": 4,        # small batch for demo
     "num_workers": 2,
     "num_classes": 50,      # use 50-class demo split

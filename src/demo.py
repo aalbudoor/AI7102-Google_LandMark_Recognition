@@ -23,7 +23,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 cfg = {
     "split_dir": PROJECT_ROOT / "data/splits_balanced",
-    "img_root": PROJECT_ROOT / "data/images", #Refactor the path where images are loaded
+    "img_root": PROJECT_ROOT / "data/train_images", 
     "batch_size": 4,        # small batch for demo
     "num_workers": 2,
     "num_classes": 50,      # use 50-class demo split
